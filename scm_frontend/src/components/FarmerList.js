@@ -10,15 +10,16 @@ const FarmersList = () => {
     const fetchFarmers = async () => {
       try {
         const response = await axios.get('http://localhost:5001/api/farmers');
-        console.log('Farmers fetched:', response.data); // Log data to check
+        console.log('Fetched farmers:', response.data);
         setFarmers(response.data);
-      } catch (err) {
-        setError('Error fetching farmers');
-      } finally {
+        setLoading(false);
+      } catch (error) {
+        console.error('Error fetching farmers:', error.message);
+        setError('Failed to fetch farmers');
         setLoading(false);
       }
     };
-
+  
     fetchFarmers();
   }, []);
 

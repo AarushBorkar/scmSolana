@@ -9,7 +9,7 @@ const yieldRoutes = require('./routes/yieldRoutes');
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors()); // Enables CORS for all routes
 app.use(bodyParser.json());
 
 // Routes

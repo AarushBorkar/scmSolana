@@ -3,10 +3,10 @@ import axios from 'axios';
 
 const YieldSubmission = () => {
   const [yieldData, setYieldData] = useState({
-    aadhaar: '',
+    farmer_id: '',
     crop: '',
     weight: '',
-    price: ''
+    price: '',
   });
 
   const handleChange = (e) => {
@@ -15,34 +15,66 @@ const YieldSubmission = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('Submitting yield data:', yieldData);
+
     try {
-      const response = await axios.post('http://localhost:5001/api/yields/submit', yieldData);
+      const response = await axios.post(
+        'http://localhost:5001/api/yields/add',
+        yieldData,
+        { headers: { 'Content-Type': 'application/json' } }
+      );
       alert(response.data.message);
+      setYieldData({ farmer_id: '', crop: '', weight: '', price: '' });
     } catch (err) {
-      alert(err.response?.data?.message || 'Error submitting yield');
+      console.error('Error submitting yield:', err.response?.data?.error || err.message);
+      alert(err.response?.data?.error || 'Error submitting yield');
     }
   };
 
   return (
     <form onSubmit={handleSubmit}>
       <label>
-        Aadhaar:
-        <input type="text" name="aadhaar" value={yieldData.aadhaar} onChange={handleChange} required />
+        Farmer ID:
+        <input
+          type="text"
+          name="farmer_id"
+          value={yieldData.farmer_id}
+          onChange={handleChange}
+          required
+        />
       </label>
       <br />
       <label>
         Crop:
-        <input type="text" name="crop" value={yieldData.crop} onChange={handleChange} required />
+        <input
+          type="text"
+          name="crop"
+          value={yieldData.crop}
+          onChange={handleChange}
+          required
+        />
       </label>
       <br />
       <label>
         Weight (kg):
-        <input type="number" name="weight" value={yieldData.weight} onChange={handleChange} required />
+        <input
+          type="number"
+          name="weight"
+          value={yieldData.weight}
+          onChange={handleChange}
+          required
+        />
       </label>
       <br />
       <label>
-        Price (per kg):
-        <input type="number" name="price" value={yieldData.price} onChange={handleChange} required />
+        Price (₹/kg):
+        <input
+          type="number"
+          name="price"
+          value={yieldData.price}
+          onChange={handleChange}
+          required
+        />
       </label>
       <br />
       <button type="submit">Submit Yield</button>

@@ -1,63 +1,53 @@
 const express = require('express');
-const db = require('../db/connection');
 const router = express.Router();
+const db = require('../db/connection');
 
-// Submit yield (POST)
-router.post('/submit', async (req, res) => {
-  const { aadhaar, crop, weight, price } = req.body;
-
-  // Validate input fields
-  if (!aadhaar || !crop || !weight || !price) {
-    return res.status(400).json({ message: 'All fields (aadhaar, crop, weight, price) are required' });
-  }
-
+// Route: Fetch all yields
+router.get('/', async (req, res) => {
   try {
-    // Find the farmer by Aadhaar
-    const [farmerResults] = await db.query('SELECT id, wallet_balance FROM farmers WHERE aadhaar = ?', [aadhaar]);
-
-    if (farmerResults.length === 0) {
-      return res.status(404).json({ message: 'Farmer not found' });
-    }
-
-    const farmerId = farmerResults[0].id;
-
-    // Calculate tokens earned (for example, 10 tokens per unit of weight)
-    const tokensEarned = weight * price * 10;
-
-    // Insert the yield into the database
-    const [insertResult] = await db.query('INSERT INTO yields (farmer_id, crop, weight, price, tokens_earned) VALUES (?, ?, ?, ?, ?)', [farmerId, crop, weight, price, tokensEarned]);
-
-    // Update the farmer's wallet balance
-    const newBalance = farmerResults[0].wallet_balance + tokensEarned;
-    await db.query('UPDATE farmers SET wallet_balance = ? WHERE id = ?', [newBalance, farmerId]);
-
-    res.status(201).json({
-      message: 'Yield submitted successfully',
-      yieldId: insertResult.insertId,
-      newBalance
-    });
-
-  } catch (err) {
-    console.error('Database error during yield submission:', err);
-    res.status(500).json({ message: 'Error submitting yield' });
+    console.log('Fetching all yields...');
+    const [yields] = await db.query(`
+      SELECT 
+        yields.id, 
+        farmers.name AS farmer_name, 
+        yields.crop, 
+        yields.weight, 
+        yields.price, 
+        yields.tokens_earned 
+      FROM yields 
+      JOIN farmers ON yields.farmer_id = farmers.id
+    `);
+    console.log('Yields fetched successfully:', yields);
+    res.json(yields);
+  } catch (error) {
+    console.error('Error fetching yields:', error.message);
+    res.status(500).json({ error: 'Failed to fetch yields' });
   }
 });
 
-// Get yields for a farmer (GET)
-router.get('/farmer/:id', async (req, res) => {
-  const { id } = req.params;
+// Route: Add a new yield entry
+router.post('/add', async (req, res) => {
+  const { farmer_id, crop, weight, price } = req.body;
+
+  console.log('Adding a new yield with data:', { farmer_id, crop, weight, price });
+
+  // Validate input
+  if (!farmer_id || !crop || !weight || !price) {
+    console.error('Missing required fields:', { farmer_id, crop, weight, price });
+    return res.status(400).json({ error: 'All fields are required' });
+  }
 
   try {
-    const [results] = await db.query('SELECT * FROM yields WHERE farmer_id = ?', [id]);
-
-    if (results.length === 0) {
-      return res.status(404).json({ message: 'No yields found for this farmer' });
-    }
-
-    res.status(200).json(results);
-  } catch (err) {
-    console.error('Database error during yield retrieval:', err);
-    res.status(500).json({ message: 'Error fetching yields' });
+    const tokens_earned = weight * price; // Calculate tokens earned
+    const [result] = await db.query(
+      'INSERT INTO yields (farmer_id, crop, weight, price, tokens_earned) VALUES (?, ?, ?, ?, ?)',
+      [farmer_id, crop, weight, price, tokens_earned]
+    );
+    console.log('Yield added successfully:', result);
+    res.json({ message: 'Yield added successfully' });
+  } catch (error) {
+    console.error('Error adding yield:', error.message);
+    res.status(500).json({ error: 'Failed to add yield' });
   }
 });
 

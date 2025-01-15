@@ -30,9 +30,8 @@ const YieldsList = () => {
       <ul>
         {yields.map((yieldEntry) => (
           <li key={yieldEntry.id}>
-            Farmer ID: {yieldEntry.farmer_id}, Crop: {yieldEntry.crop},
-            Weight: {yieldEntry.weight}kg, Price: ₹{yieldEntry.price}/kg,
-            Tokens Earned: {yieldEntry.tokens_earned}
+            Farmer Name: {yieldEntry.farmer_name}, Crop: {yieldEntry.crop}, Weight: {yieldEntry.weight}kg, 
+            Price: ₹{yieldEntry.price}/kg, Tokens Earned: {yieldEntry.tokens_earned}
           </li>
         ))}
       </ul>
