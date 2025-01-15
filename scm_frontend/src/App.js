@@ -1,23 +1,21 @@
-import logo from './logo.svg';
-import './App.css';
+import React from 'react';
+import { Routes, Route } from 'react-router-dom';
+import HomePage from './pages/HomePage';
+import FarmersPage from './pages/FarmersPage';
+import YieldsPage from './pages/YieldsPage';
+import FarmersList from './components/FarmerList'; // Import FarmerList
+import YieldsList from './components/YieldList'; // Import YieldList
 
 function App() {
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/farmers" element={<FarmersPage />} />
+        <Route path="/farmers/list" element={<FarmersList />} /> {/* Route for Farmers List */}
+        <Route path="/yields" element={<YieldsPage />} />
+        <Route path="/yields/list" element={<YieldsList />} /> {/* Route for Yields List */}
+      </Routes>
     </div>
   );
 }
