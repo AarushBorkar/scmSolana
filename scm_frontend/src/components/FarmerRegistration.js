@@ -1,15 +1,13 @@
 import React, { useState } from 'react';
+import { TextField, Button, Container, Typography, Box } from '@mui/material';
 import axios from 'axios';
 
 const FarmerRegistration = () => {
   const [farmerData, setFarmerData] = useState({
     aadhaar: '',
     name: '',
-    wallet: ''
+    wallet: '',
   });
-
-  const [statusMessage, setStatusMessage] = useState(''); // For success or error messages
-  const [error, setError] = useState(null); // To display specific error messages
 
   const handleChange = (e) => {
     setFarmerData({ ...farmerData, [e.target.name]: e.target.value });
@@ -17,66 +15,52 @@ const FarmerRegistration = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null); // Reset error before making a request
-    setStatusMessage(''); // Clear previous status
-
-    // Input validation before making the request
-    if (!/^\d{12}$/.test(farmerData.aadhaar)) {
-      setError('Aadhaar must be a 12-digit number');
-      return;
-    }
-
     try {
       const response = await axios.post('http://localhost:5001/api/farmers/register', farmerData);
-      setStatusMessage(response.data.message || 'Farmer registered successfully!');
-      setFarmerData({ aadhaar: '', name: '', wallet: '' }); // Clear form after success
+      alert(response.data.message);
+      setFarmerData({ aadhaar: '', name: '', wallet: '' });
     } catch (err) {
-      setError(err.response?.data?.message || 'Error registering farmer. Please try again.');
+      alert(err.response?.data?.message || 'Error registering farmer');
     }
   };
 
   return (
-    <div>
-      <h2>Register Farmer</h2>
+    <Container maxWidth="sm" sx={{ marginTop: 5 }}>
+      <Typography variant="h5" textAlign="center" gutterBottom>
+        Farmer Registration
+      </Typography>
       <form onSubmit={handleSubmit}>
-        <label>
-          Aadhaar:
-          <input
-            type="text"
+        <Box display="flex" flexDirection="column" gap={2}>
+          <TextField
+            label="Aadhaar"
             name="aadhaar"
             value={farmerData.aadhaar}
             onChange={handleChange}
             required
+            fullWidth
           />
-        </label>
-        <br />
-        <label>
-          Name:
-          <input
-            type="text"
+          <TextField
+            label="Name"
             name="name"
             value={farmerData.name}
             onChange={handleChange}
             required
+            fullWidth
           />
-        </label>
-        <br />
-        <label>
-          Wallet Address:
-          <input
-            type="text"
+          <TextField
+            label="Wallet Address"
             name="wallet"
             value={farmerData.wallet}
             onChange={handleChange}
             required
+            fullWidth
           />
-        </label>
-        <br />
-        <button type="submit">Register Farmer</button>
+          <Button type="submit" variant="contained" color="primary" fullWidth>
+            Register Farmer
+          </Button>
+        </Box>
       </form>
-      {statusMessage && <p style={{ color: 'green' }}>{statusMessage}</p>}
-      {error && <p style={{ color: 'red' }}>{error}</p>}
-    </div>
+    </Container>
   );
 };
 
