@@ -1,16 +1,19 @@
 const express = require('express');
-const bs58 = require('bs58');
-const fs = require('fs');
 const path = require('path');
+const { exec } = require('child_process');
+const fs = require('fs'); // Import file system module
+const bs58 = require('bs58');
 const { 
   Connection, 
   PublicKey, 
   Keypair, 
-  Transaction 
+  Transaction,
+  SystemProgram
 } = require('@solana/web3.js');
-const { 
-  getOrCreateAssociatedTokenAccount, 
-  createTransferInstruction 
+const {
+  getOrCreateAssociatedTokenAccount,
+  createTransferInstruction,
+  Token
 } = require('@solana/spl-token');
 const router = express.Router();
 const db = require('../db/connection');
@@ -19,12 +22,12 @@ const db = require('../db/connection');
 const connection = new Connection('https://api.devnet.solana.com', 'confirmed');
 
 // Load main wallet secret key
-const secretKeyPath = path.resolve(__dirname, '../../dad6YRNQKc2Kq56gSubF1mcJ8JBmaWKJyQxr4T2AQt5.json');
+const secretKeyPath = '/Users/aarush/keynew.js'; // Updated fee payer path
 const secretKeyArray = JSON.parse(fs.readFileSync(secretKeyPath, 'utf8'));
 const payerKeypair = Keypair.fromSecretKey(Uint8Array.from(secretKeyArray));
 
-// Mint public key
-const mintPublicKey = new PublicKey('mntGRyTT6RV4Xnk3jVvMWwiYVQUcmsibriacLpGtZBx'); // Replace with your actual mint address
+// Mint public key (replace with your mint address)
+const mintPublicKey = new PublicKey('mntGRyTT6RV4Xnk3jVvMWwiYVQUcmsibriacLpGtZBx'); 
 
 // Route: Get all yields
 router.get('/', async (req, res) => {
@@ -69,56 +72,39 @@ router.post('/add', async (req, res) => {
     const farmerWallet = farmer[0].wallet;
 
     // Validate farmer wallet address
-    try {
-      bs58.decode(farmerWallet);
-    } catch (err) {
-      console.error('Invalid farmer wallet address:', farmerWallet, err.message);
+    if (!/^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(farmerWallet)) {
+      console.error('Invalid farmer wallet address:', farmerWallet);
       return res.status(400).json({ error: 'Invalid farmer wallet address' });
     }
 
-    // Ensure main wallet's token account exists
-    const mainTokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection,
-      payerKeypair,
-      mintPublicKey,
-      payerKeypair.publicKey
-    );
-    console.log('Main Wallet Token Account:', mainTokenAccount.address.toBase58());
+    // Construct the CLI command to transfer tokens
+    const cliCommand = `spl-token transfer ${mintPublicKey.toString()} ${tokensEarned} ${farmerWallet} --url https://api.devnet.solana.com --allow-unfunded-recipient --fee-payer "${secretKeyPath}" --fund-recipient`;
 
-    // Ensure farmer's token account exists
-    const farmerTokenAccount = await getOrCreateAssociatedTokenAccount(
-      connection,
-      payerKeypair,
-      mintPublicKey,
-      new PublicKey(farmerWallet)
-    );
-    console.log('Farmer Token Account:', farmerTokenAccount.address.toBase58());
+    console.log('Executing CLI Command:', cliCommand);
 
-    // Create transfer instruction
-    const transferInstruction = createTransferInstruction(
-      mainTokenAccount.address, // Source token account
-      farmerTokenAccount.address, // Destination token account
-      payerKeypair.publicKey, // Authority
-      tokensEarned * 10 ** 9 // Tokens in smallest unit (lamports)
-    );
+    // Execute the CLI command
+    exec(cliCommand, async (error, stdout, stderr) => {
+      if (error) {
+        console.error('Error during token transfer:', stderr);
+        return res.status(500).json({
+          error: 'Failed to transfer tokens',
+          details: stderr || 'Unknown error occurred',
+        });
+      }
 
-    // Create and send transaction
-    const transaction = new Transaction().add(transferInstruction);
-    const signature = await connection.sendTransaction(transaction, [payerKeypair]);
-    await connection.confirmTransaction(signature);
+      console.log('Token Transfer Output:', stdout);
 
-    console.log('Transaction Signature:', signature);
+      // Insert yield into the database
+      await db.query(
+        'INSERT INTO yields (farmer_id, crop, weight, price, tokens_earned) VALUES (?, ?, ?, ?, ?)',
+        [farmer_id, crop, weight, price, tokensEarned]
+      );
 
-    // Insert yield into the database
-    await db.query(
-      'INSERT INTO yields (farmer_id, crop, weight, price, tokens_earned) VALUES (?, ?, ?, ?, ?)',
-      [farmer_id, crop, weight, price, tokensEarned]
-    );
-
-    res.json({
-      message: 'Yield added and tokens transferred successfully',
-      tokensEarned,
-      signature,
+      res.json({
+        message: 'Yield added successfully, tokens transferred',
+        tokensEarned,
+        transactionDetails: stdout,
+      });
     });
   } catch (error) {
     console.error('Error processing yield:', error.message || error);

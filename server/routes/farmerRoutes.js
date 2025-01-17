@@ -1,6 +1,6 @@
 const express = require('express');
 const path = require('path');
-const bs58 = require('bs58'); // Import Base58 encoding library
+const bs58 = require('bs58'); // Base58 encoding library
 const router = express.Router();
 const db = require('../db/connection');
 
@@ -38,6 +38,14 @@ router.post('/register', async (req, res) => {
 
     // Convert the secret key array to a Base58-encoded string
     const secretKey = bs58.encode(secretKeyArray);
+
+    // Validate generated wallet address
+    try {
+      bs58.decode(walletAddress);
+    } catch (err) {
+      console.error('Generated wallet address is invalid:', walletAddress);
+      return res.status(500).json({ error: 'Failed to generate a valid wallet address' });
+    }
 
     // Save farmer details to the database
     await db.query(
