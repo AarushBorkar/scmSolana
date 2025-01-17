@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { Box, Typography, TextField, Button, CircularProgress, Paper } from '@mui/material';
 
 const FarmerRegistration = () => {
   const [formData, setFormData] = useState({ aadhaar: '', name: '' });
   const [walletDetails, setWalletDetails] = useState(null);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -14,75 +16,75 @@ const FarmerRegistration = () => {
     e.preventDefault();
     setError(null); // Clear any previous errors
     setWalletDetails(null); // Clear previous wallet details
+    setLoading(true); // Start loading
+
     try {
       const response = await axios.post('http://localhost:5001/api/farmers/register', formData);
       setWalletDetails(response.data); // Set wallet details on successful registration
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to register farmer'); // Set error message
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '500px', margin: 'auto', textAlign: 'center' }}>
-      <h2>Farmer Registration</h2>
-      <form onSubmit={handleSubmit} style={{ marginBottom: '20px' }}>
-        <div style={{ marginBottom: '10px' }}>
-          <input
-            type="text"
-            name="aadhaar"
-            placeholder="Aadhaar"
-            value={formData.aadhaar}
-            onChange={handleChange}
-            required
-            style={{ padding: '10px', width: '100%' }}
-          />
-        </div>
-        <div style={{ marginBottom: '10px' }}>
-          <input
-            type="text"
-            name="name"
-            placeholder="Name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-            style={{ padding: '10px', width: '100%' }}
-          />
-        </div>
-        <button
+    <Box sx={{ padding: 4, maxWidth: 600, margin: 'auto', textAlign: 'center', backgroundColor: '#f9f1ff', borderRadius: 2 }}>
+      <Typography variant="h4" color="primary" gutterBottom>
+        Farmer Registration
+      </Typography>
+
+      <form onSubmit={handleSubmit}>
+        <TextField
+          label="Aadhaar"
+          name="aadhaar"
+          value={formData.aadhaar}
+          onChange={handleChange}
+          required
+          fullWidth
+          sx={{ mb: 2 }}
+          variant="outlined"
+        />
+        <TextField
+          label="Name"
+          name="name"
+          value={formData.name}
+          onChange={handleChange}
+          required
+          fullWidth
+          sx={{ mb: 2 }}
+          variant="outlined"
+        />
+        <Button
           type="submit"
-          style={{
-            padding: '10px 20px',
-            backgroundColor: '#4CAF50',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
-          }}
+          variant="contained"
+          color="secondary"
+          fullWidth
+          sx={{ mt: 2, padding: 1.5, fontSize: 16 }}
         >
-          Register
-        </button>
+          {loading ? <CircularProgress size={24} color="primary" /> : 'Register'}
+        </Button>
       </form>
 
       {error && (
-        <div style={{ color: 'red', marginBottom: '20px' }}>
+        <Typography color="error" sx={{ mt: 2 }}>
           <strong>Error:</strong> {error}
-        </div>
+        </Typography>
       )}
 
       {walletDetails && (
-        <div style={{ textAlign: 'left', marginTop: '20px', padding: '10px', border: '1px solid #ccc' }}>
-          <h3>Wallet Details</h3>
-          <p><strong>Public Key:</strong> {walletDetails.walletAddress}</p>
-          <p>
-            <strong>Secret Key:</strong> {walletDetails.secretKey}
-          </p>
-          <p style={{ fontSize: 'small', color: '#555' }}>
-            <strong>Note:</strong> Save these details as it wont be displayed again. The secret key is sensitive and
-            should not be shared with others.
-          </p>
-        </div>
+        <Paper sx={{ mt: 3, padding: 2, backgroundColor: '#e1bee7' }}>
+          <Typography variant="h6" color="primary">
+            Wallet Details
+          </Typography>
+          <Typography><strong>Public Key:</strong> {walletDetails.walletAddress}</Typography>
+          <Typography><strong>Secret Key:</strong> {walletDetails.secretKey}</Typography>
+          <Typography sx={{ fontSize: 'small', color: '#555' }}>
+            <strong>Note:</strong> Save these details as they won't be displayed again. The secret key is sensitive and should not be shared.
+          </Typography>
+        </Paper>
       )}
-    </div>
+    </Box>
   );
 };
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { Box, Typography, TextField, Button, CircularProgress, Paper } from '@mui/material';
 
 const YieldSubmission = () => {
   const [yieldData, setYieldData] = useState({
@@ -8,6 +9,8 @@ const YieldSubmission = () => {
     weight: '',
     price: '',
   });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleChange = (e) => {
     setYieldData({ ...yieldData, [e.target.name]: e.target.value });
@@ -15,7 +18,8 @@ const YieldSubmission = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Submitting yield data:', yieldData);
+    setLoading(true); // Start loading
+    setError(null); // Clear previous errors
 
     try {
       const response = await axios.post(
@@ -26,59 +30,79 @@ const YieldSubmission = () => {
       alert(response.data.message);
       setYieldData({ farmer_id: '', crop: '', weight: '', price: '' });
     } catch (err) {
-      console.error('Error submitting yield:', err.response?.data?.error || err.message);
+      setError(err.response?.data?.error || 'Error submitting yield');
       alert(err.response?.data?.error || 'Error submitting yield');
+    } finally {
+      setLoading(false); // Stop loading
     }
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <label>
-        Farmer ID:
-        <input
-          type="text"
+    <Box sx={{ padding: 4, maxWidth: 600, margin: 'auto', textAlign: 'center', backgroundColor: '#f9f1ff', borderRadius: 2 }}>
+      <Typography variant="h4" color="primary" gutterBottom>
+        Submit Your Yield
+      </Typography>
+
+      <form onSubmit={handleSubmit}>
+        <TextField
+          label="Farmer ID"
           name="farmer_id"
           value={yieldData.farmer_id}
           onChange={handleChange}
           required
+          fullWidth
+          sx={{ mb: 2 }}
+          variant="outlined"
         />
-      </label>
-      <br />
-      <label>
-        Crop:
-        <input
-          type="text"
+        <TextField
+          label="Crop"
           name="crop"
           value={yieldData.crop}
           onChange={handleChange}
           required
+          fullWidth
+          sx={{ mb: 2 }}
+          variant="outlined"
         />
-      </label>
-      <br />
-      <label>
-        Weight (kg):
-        <input
-          type="number"
+        <TextField
+          label="Weight (kg)"
           name="weight"
+          type="number"
           value={yieldData.weight}
           onChange={handleChange}
           required
+          fullWidth
+          sx={{ mb: 2 }}
+          variant="outlined"
         />
-      </label>
-      <br />
-      <label>
-        Price (₹/kg):
-        <input
-          type="number"
+        <TextField
+          label="Price (₹/kg)"
           name="price"
+          type="number"
           value={yieldData.price}
           onChange={handleChange}
           required
+          fullWidth
+          sx={{ mb: 2 }}
+          variant="outlined"
         />
-      </label>
-      <br />
-      <button type="submit">Submit Yield</button>
-    </form>
+        <Button
+          type="submit"
+          variant="contained"
+          color="secondary"
+          fullWidth
+          sx={{ mt: 2, padding: 1.5, fontSize: 16 }}
+        >
+          {loading ? <CircularProgress size={24} color="primary" /> : 'Submit Yield'}
+        </Button>
+      </form>
+
+      {error && (
+        <Typography color="error" sx={{ mt: 2 }}>
+          <strong>Error:</strong> {error}
+        </Typography>
+      )}
+    </Box>
   );
 };
 

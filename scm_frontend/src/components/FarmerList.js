@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { Box, Typography, List, ListItem, ListItemText, Paper, CircularProgress, Alert } from '@mui/material';
 
 const FarmersList = () => {
   const [farmers, setFarmers] = useState([]);
@@ -10,33 +11,38 @@ const FarmersList = () => {
     const fetchFarmers = async () => {
       try {
         const response = await axios.get('http://localhost:5001/api/farmers');
-        console.log('Fetched farmers:', response.data);
         setFarmers(response.data);
         setLoading(false);
       } catch (error) {
-        console.error('Error fetching farmers:', error.message);
         setError('Failed to fetch farmers');
         setLoading(false);
       }
     };
-  
+
     fetchFarmers();
   }, []);
 
-  if (loading) return <p>Loading...</p>;
-  if (error) return <p>{error}</p>;
+  if (loading) return <CircularProgress />;
+  if (error) return <Alert severity="error">{error}</Alert>;
 
   return (
-    <div>
-      <h2>Registered Farmers</h2>
-      <ul>
-        {farmers.map((farmer) => (
-          <li key={farmer.id}>
-            {farmer.name} ({farmer.aadhaar}) - Wallet: {farmer.wallet}
-          </li>
-        ))}
-      </ul>
-    </div>
+    <Box sx={{ padding: 4, maxWidth: 800, margin: 'auto', textAlign: 'center' }}>
+      <Typography variant="h4" color="primary" gutterBottom>
+        Registered Farmers
+      </Typography>
+      <Paper sx={{ padding: 2, backgroundColor: '#f1f1f1' }}>
+        <List>
+          {farmers.map((farmer) => (
+            <ListItem key={farmer.id}>
+              <ListItemText
+                primary={`${farmer.name} (ID: ${farmer.id})`}
+                secondary={`Wallet: ${farmer.wallet}`}
+              />
+            </ListItem>
+          ))}
+        </List>
+      </Paper>
+    </Box>
   );
 };
 
