@@ -77,12 +77,25 @@ router.post('/add', async (req, res) => {
       return res.status(400).json({ error: 'Invalid farmer wallet address' });
     }
 
-    // Construct the CLI command to transfer tokens
+    // SOL Transfer: 0.1 SOL to the farmer's ATA
+    const receiverPublicKey = new PublicKey(farmerWallet);
+    const transaction = new Transaction();
+    
+    // Add SOL transfer instruction (0.1 SOL)
+    transaction.add(
+      SystemProgram.transfer({
+        fromPubkey: payerKeypair.publicKey, // sender (your main wallet)
+        toPubkey: receiverPublicKey, // receiver's wallet (ATA)
+        lamports: 0.1 * 10**9, // 0.1 SOL (1 SOL = 10^9 lamports)
+      })
+    );
+
+    // Token Transfer: Send the tokens (already in your original logic)
     const cliCommand = `spl-token transfer ${mintPublicKey.toString()} ${tokensEarned} ${farmerWallet} --url https://api.devnet.solana.com --allow-unfunded-recipient --fee-payer "${secretKeyPath}" --fund-recipient`;
 
-    console.log('Executing CLI Command:', cliCommand);
+    console.log('Executing SOL and Token Transfer...');
 
-    // Execute the CLI command
+    // Execute the CLI command for token transfer
     exec(cliCommand, async (error, stdout, stderr) => {
       if (error) {
         console.error('Error during token transfer:', stderr);
@@ -92,25 +105,33 @@ router.post('/add', async (req, res) => {
         });
       }
 
-      console.log('Token Transfer Output:', stdout);
+      // Add both transactions (SOL + Token transfer) to the network
+      try {
+        const txHash = await connection.sendTransaction(transaction, [payerKeypair]);
+        console.log('SOL Transfer Transaction Hash:', txHash);
 
-      // Insert yield into the database
-      await db.query(
-        'INSERT INTO yields (farmer_id, crop, weight, price, tokens_earned) VALUES (?, ?, ?, ?, ?)',
-        [farmer_id, crop, weight, price, tokensEarned]
-      );
+        // Insert yield into the database
+        await db.query(
+          'INSERT INTO yields (farmer_id, crop, weight, price, tokens_earned) VALUES (?, ?, ?, ?, ?)',
+          [farmer_id, crop, weight, price, tokensEarned]
+        );
 
-      res.json({
-        message: 'Yield added successfully, tokens transferred',
-        tokensEarned,
-        transactionDetails: stdout,
-      });
+        res.json({
+          message: 'Yield added successfully, tokens and SOL transferred',
+          tokensEarned,
+          transactionDetails: stdout,
+          solTransactionHash: txHash,
+        });
+      } catch (solError) {
+        console.error('Error during SOL transfer:', solError.message);
+        return res.status(500).json({
+          error: 'Failed to transfer SOL',
+          details: solError.message || 'Unknown error occurred',
+        });
+      }
     });
   } catch (error) {
     console.error('Error processing yield:', error.message || error);
-    if (error.logs) {
-      console.error('Transaction Logs:', error.logs);
-    }
     res.status(500).json({
       error: 'Failed to add yield',
       details: error.message || 'Unknown error occurred',
