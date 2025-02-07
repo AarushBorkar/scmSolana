@@ -36,9 +36,6 @@ const VendorsPage = () => {
   const [vendors] = useState([
     { id: 1, name: "Ramesh Kumar", lat: 19.2183, lng: 72.9782 },
     { id: 2, name: "Shankar Patel", lat: 19.0758, lng: 72.8777 },
-    { id: 3, name: "Naveen Kumar", lat: 18.5204, lng: 73.8567 },
-    { id: 4, name: "Deepak Rao", lat: 19.7485, lng: 75.3433 },
-    { id: 5, name: "Amit Sharma", lat: 20.7984, lng: 73.5558 },
     { id: 6, name: "Suresh Singh", lat: 19.1155, lng: 72.8310 },
     { id: 7, name: "Vikash Reddy", lat: 19.0450, lng: 73.0143 },
     { id: 8, name: "Rajesh Deshmukh", lat: 19.1896, lng: 73.0857 },

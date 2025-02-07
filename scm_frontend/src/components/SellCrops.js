@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import axios from 'axios';
+import { Box, Typography, TextField, Button, CircularProgress, Paper } from '@mui/material';
 
 const SellCrops = ({ farmerId, stocks }) => {
   const [selectedCrop, setSelectedCrop] = useState('');
@@ -7,6 +9,7 @@ const SellCrops = ({ farmerId, stocks }) => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [tokensToSend, setTokensToSend] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   // Handle crop selection and auto-fill price
   const handleCropChange = (e) => {
@@ -22,11 +25,12 @@ const SellCrops = ({ farmerId, stocks }) => {
     }
   };
 
-  const handleSell = async () => {
-    if (!selectedCrop || !saleWeight) {
-      setError('Please fill all the fields.');
-      return;
-    }
+  const handleSell = async (e) => {
+    e.preventDefault();
+    setError('');
+    setMessage('');
+    setTokensToSend(null);
+    setLoading(true);
 
     const saleData = {
       crop: selectedCrop,
@@ -35,73 +39,107 @@ const SellCrops = ({ farmerId, stocks }) => {
     };
 
     try {
-      const response = await fetch(`http://localhost:5001/api/sell/sell/${farmerId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(saleData),
-      });
+      const response = await axios.post(`http://localhost:5001/api/sell/sell/${farmerId}`, saleData);
+      const data = await response.data;
 
-      const data = await response.json();
-
-      if (response.ok) {
+      if (response.status === 200) {
         setMessage(`Sale successful: ${data.crop} sold!`);
         setTokensToSend(data.tokensToSend);
-        setError('');
       } else {
-        setMessage('');
-        setTokensToSend(null);
         setError(data.error || 'Failed to process sale');
       }
     } catch (err) {
-      setMessage('');
-      setTokensToSend(null);
       setError('Error processing sale');
-      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div>
-      <h1>Sell Crop</h1>
+    <Box sx={{ padding: 4, maxWidth: 600, margin: 'auto', textAlign: 'center', backgroundColor: '#f9f1ff', borderRadius: 2 }}>
+      <Typography variant="h4" color="primary" gutterBottom>
+        Sell Crop
+      </Typography>
 
-      {/* Select a crop from the available stocks */}
-      <select value={selectedCrop} onChange={handleCropChange}>
-        <option value="">Select Crop</option>
-        {stocks.map((stock) => (
-          <option key={stock.id} value={stock.crop}>
-            {stock.crop} - {stock.weight}kg available
-          </option>
-        ))}
-      </select>
+      <form onSubmit={handleSell}>
+        {/* Crop selection */}
+        <TextField
+          label="Select Crop"
+          value={selectedCrop}
+          onChange={handleCropChange}
+          required
+          fullWidth
+          sx={{ mb: 2 }}
+          variant="outlined"
+          select
+          SelectProps={{
+            native: true,
+          }}
+        >
+          <option value="">Select Crop</option>
+          {stocks.map((stock) => (
+            <option key={stock.id} value={stock.crop}>
+              {stock.crop} - {stock.weight}kg available
+            </option>
+          ))}
+        </TextField>
 
-      <input
-        type="number"
-        placeholder="Enter weight to sell"
-        value={saleWeight}
-        onChange={(e) => setSaleWeight(e.target.value)}
-      />
+        {/* Weight input */}
+        <TextField
+          label="Weight to Sell"
+          type="number"
+          value={saleWeight}
+          onChange={(e) => setSaleWeight(e.target.value)}
+          required
+          fullWidth
+          sx={{ mb: 2 }}
+          variant="outlined"
+        />
 
-      {/* Price input is now auto-filled and read-only */}
-      <input
-        type="number"
-        placeholder="Price per unit"
-        value={salePrice}
-        readOnly
-      />
+        {/* Price input (read-only) */}
+        <TextField
+          label="Price per Unit"
+          type="number"
+          value={salePrice}
+          readOnly
+          fullWidth
+          sx={{ mb: 2 }}
+          variant="outlined"
+        />
 
-      <button onClick={handleSell}>Sell</button>
+        {/* Submit button */}
+        <Button
+          type="submit"
+          variant="contained"
+          color="secondary"
+          fullWidth
+          sx={{ mt: 2, padding: 1.5, fontSize: 16 }}
+        >
+          {loading ? <CircularProgress size={24} color="primary" /> : 'Sell'}
+        </Button>
+      </form>
 
-      {/* Show success or error message */}
-      {message && <div className="message">{message}</div>}
-      {error && <div className="error">{error}</div>}
-
-      {/* Show tokens required for transaction */}
-      {tokensToSend !== null && (
-        <div className="tokens-info">
-          <strong>Tokens to be sent:</strong> {tokensToSend} tokens
-        </div>
+      {message && (
+        <Typography color="success" sx={{ mt: 2 }}>
+          <strong>{message}</strong>
+        </Typography>
       )}
-    </div>
+
+      {error && (
+        <Typography color="error" sx={{ mt: 2 }}>
+          <strong>Error:</strong> {error}
+        </Typography>
+      )}
+
+      {tokensToSend !== null && (
+        <Paper sx={{ mt: 3, padding: 2, backgroundColor: '#e1bee7' }}>
+          <Typography variant="h6" color="primary">
+            Tokens to be sent:
+          </Typography>
+          <Typography>{tokensToSend} tokens</Typography>
+        </Paper>
+      )}
+    </Box>
   );
 };
 
