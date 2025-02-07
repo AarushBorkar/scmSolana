@@ -9,6 +9,7 @@ import HomePage from './pages/HomePage';
 import FarmersPage from './pages/FarmersPage';
 import YieldsPage from './pages/YieldsPage';
 import SellPage from './pages/SellPage'; // New Sell Page
+import VendorsPage from "./pages/VendorsPage";
 
 // Component imports
 import FarmersList from './components/FarmerList';
@@ -89,6 +90,7 @@ function App() {
             <Route path="/sell" element={<SellPage />} /> {/* New Sell Page */}
             <Route path="/sell/submit" element={<SellCrop />} /> {/* New Sell Crop */}
             <Route path="/sell/stocks/:farmerId" element={<SellStockList />} /> {/* New Sell Stock List */}
+            <Route path="/vendors" element={<VendorsPage />} />
           </Routes>
         </Container>
       </div>
