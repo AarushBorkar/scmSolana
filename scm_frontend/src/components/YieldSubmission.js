@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Box, Typography, TextField, Button, CircularProgress, Paper } from '@mui/material';
+import { Box, Typography, TextField, Button, CircularProgress } from '@mui/material';
 
 const YieldSubmission = () => {
   const [yieldData, setYieldData] = useState({
