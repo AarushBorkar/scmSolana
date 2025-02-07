@@ -36,6 +36,13 @@ const HomePage = () => {
             View Yields
           </Button>
         </motion.div>
+
+        {/* New Sell Crops Button */}
+        <motion.div initial={{ y: -100 }} animate={{ y: 0 }} transition={{ duration: 1, delay: 0.6 }}>
+          <Button variant="contained" color="primary" component={Link} to="/sell">
+            Sell Crops
+          </Button>
+        </motion.div>
       </Stack>
     </Box>
   );

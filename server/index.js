@@ -9,6 +9,7 @@ const app = express();
 // Import Routes
 const farmerRoutes = require('./routes/farmerRoutes');
 const yieldRoutes = require('./routes/yieldRoutes');
+const sellRoutes = require('./routes/sellRoutes'); // Add this line for the new sell routes
 
 // Middleware
 app.use(cors()); // Enable CORS for all routes
@@ -17,6 +18,7 @@ app.use(bodyParser.json()); // Parse JSON request bodies
 // Define Routes
 app.use('/api/farmers', farmerRoutes); // Farmer routes
 app.use('/api/yields', yieldRoutes);   // Yield routes
+app.use('/api/sell', sellRoutes);      // Add this line for the sell routes
 
 // Health Check or Welcome Route
 app.get('/', (req, res) => {
